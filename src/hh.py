@@ -3,18 +3,32 @@ import requests
 
 
 class API_abstract(ABC):
+    """
+    Абстрактный базовый класс API, который определяет метод `get_vacancies` для получения списка вакансий.
+    """
 
     @abstractmethod
-    def get_vacancies(self):
+    def get_vacancies(self) -> None:
         pass
 
 
 class HeadHunter(API_abstract):
+    """
+    Класс для работы с API HeadHunter. Наследует от абстрактного базового класса API_abstract.
+    """
 
-    def __init__(self):
+    def __init__(self) -> None:
+        """
+        Инициализация класса с заданием базового URL-адреса API HeadHunter.
+        """
+
         self.url = "https://api.hh.ru/vacancies/"
 
-    def get_vacancies(self, keyword='python'):
+    def get_vacancies(self, keyword='python') -> None:
+        """
+        Инициализация класса с заданием базового URL-адреса API HeadHunter.
+        """
+
         params = {
             'text': f"NAME:{keyword}",  # Текст фильтра. В имени должно быть слово "Python"
             'area': 1,  # Поиск оcуществляется по вакансиям города Москва
@@ -26,7 +40,13 @@ class HeadHunter(API_abstract):
         self.vacancies = response.json()['items']
 
     def get_format_and_search_vacancies(self):
-        # Получение информации о работодателях из переменной self.vacancies без повторений
+        """
+        Форматирование и поиск информации о вакансиях и работодателях на основе данных из self.vacancies.
+
+        Returns:
+            list: список словарей, содержащих информацию о работодателях и их вакансиях.
+        """
+
         hh_emp_data = []
         seen_employers = set()  # Множество для отслеживания уже добавленных работодателей
 

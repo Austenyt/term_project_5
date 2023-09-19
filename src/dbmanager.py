@@ -1,10 +1,18 @@
+import json
 import psycopg2
 
 class DBManager:
     def __init__(self):
+        """
+        Инициализация объекта менеджера базы данных.
+        """
         self.conn = None
 
-    def connect_to_db(self):
+    def connect_to_db(self) -> None:
+        """
+        Подключение к базе данных. В случае ошибки, отображает сообщение об ошибке.
+        """
+
         try:
             self.conn = psycopg2.connect(
                 host="localhost",
@@ -15,12 +23,24 @@ class DBManager:
         except psycopg2.Error as e:
             print(f"Ошибка при подключении к базе данных: {e}")
 
-    def close_db_connection(self):
+    def close_db_connection(self) -> None:
+        """
+        Закрытие соединения с базой данных и вывод сообщения об успешном закрытии.
+        """
+
         if self.conn:
             self.conn.close()
             print("Соединение с базой данных закрыто")
 
     def fill_tables_from_files(self, hh_emp_data):
+        """
+        Создание и заполнение таблиц Employers и Vacancies данными из списка hh_emp_data. В случае ошибки, откатывает
+        транзакцию и выводит сообщение об ошибке.
+
+        Args:
+            hh_emp_data (list): Список словарей с данными о работодателях и вакансиях.
+        """
+
         self.connect_to_db()  # Подключение к базе данных
 
         try:
@@ -62,7 +82,12 @@ class DBManager:
         finally:
             self.close_db_connection()  # Закрытие соединения с базой данных
 
-    def get_companies_and_vacancies_count(self):
+    def get_companies_and_vacancies_count(self) -> None:
+        """
+        Получение списка компаний с количеством вакансий для каждой компании и отображение результатов.
+        В случае ошибки, выводит сообщение об ошибке.
+        """
+
         self.connect_to_db()  # Подключение к базе данных
 
         try:
@@ -75,13 +100,18 @@ class DBManager:
                     'ORDER BY Employers.employer_name'
                 )
                 comp_count = cur.fetchall()
-                print(comp_count)
+                print(f"Список компаний и количество их вакансий: {json.dumps(comp_count, indent=4, ensure_ascii=False)}")
         except psycopg2.Error as e:
             print(f"Ошибка при получении данных: {e}")
         finally:
             self.close_db_connection()  # Закрытие соединения с базой данных
 
-    def get_all_vacancies(self):
+    def get_all_vacancies(self) -> None:
+
+        """
+        Получение всех вакансий и отображение результатов. В случае ошибки, выводит сообщение об ошибке.
+        """
+
         self.connect_to_db()  # Подключение к базе данных
         try:
             with self.conn.cursor() as cur:
@@ -91,13 +121,17 @@ class DBManager:
                     'LEFT JOIN Employers ON Vacancies.employer_id = Employers.employer_id'
                 )
                 all_vac = cur.fetchall()
-                print(all_vac)
+                print(f"Список всех вакансий: {json.dumps(all_vac, indent=4, ensure_ascii=False)}")
         except psycopg2.Error as e:
             print(f"Ошибка при получении данных: {e}")
         finally:
             self.close_db_connection()  # Закрытие соединения с базой данных
 
-    def get_avg_salary(self):
+    def get_avg_salary(self) -> None:
+        """
+        Получение средней зарплаты по вакансиям и отображение результата. В случае ошибки, выводит сообщение об ошибке.
+        """
+
         self.connect_to_db()  # Подключение к базе данных
         try:
             with self.conn.cursor() as cur:
@@ -119,20 +153,32 @@ class DBManager:
         finally:
             self.close_db_connection()  # Закрытие соединения с базой данных
 
-    def get_vacancies_with_higher_salary(self):
+    def get_vacancies_with_higher_salary(self) -> None:
+        """
+        Получение максимальной зарплаты и отображение результата. В случае ошибки, выводит сообщение об ошибке.
+        """
+
         self.connect_to_db()
         try:
             with self.conn.cursor() as cur:
                 # Измененный запрос на получение максимальной зарплаты
                 cur.execute("SELECT MAX(vacancy_salary) FROM Vacancies WHERE vacancy_salary != 'Не указано';")
                 max_salary = cur.fetchone()[0]
-                print(f"Максимальная зарплата: {max_salary}")
+                print(f"Максимальная зарплата по вакансиям: {max_salary}")
         except psycopg2.Error as e:
             print(f"Ошибка при получении максимальной зарплаты: {e}")
         finally:
             self.close_db_connection()
 
-    def get_vacancies_with_keyword(self, keyword='Стажер'):
+    def get_vacancies_with_keyword(self, keyword='Стажер') -> None:
+        """
+        Получение списка вакансий, содержащих указанное ключевое слово (по умолчанию "Стажер") и отображение результата.
+        В случае ошибки, выводит сообщение об ошибке.
+
+        Args:
+            keyword (str, optional): Ключевое слово для поиска вакансий. По умолчанию 'Стажер'.
+        """
+
         self.connect_to_db()
         try:
             with self.conn.cursor() as cur:
@@ -148,5 +194,9 @@ class DBManager:
         finally:
             self.close_db_connection()
 
-    def closs_conn(self):
+    def closs_conn(self) -> None:
+        """
+        Закрытие соединения с базой данных.
+        """
+
         self.conn.close()
