@@ -127,11 +127,12 @@ class DBManager:
         finally:
             self.close_db_connection()  # Закрытие соединения с базой данных
 
-    def get_avg_salary(self) -> None:
+    def get_avg_salary(self) -> float or None:
         """
-        Получение средней зарплаты по вакансиям и отображение результата. В случае ошибки, выводит сообщение об ошибке.
+        Получение средней зарплаты по вакансиям и отображение результата.
+        В случае ошибки, выводит сообщение об ошибке.
+        Возвращает среднюю зарплату в виде числа с плавающей точкой или None, если ее не удалось получить.
         """
-
         self.connect_to_db()  # Подключение к базе данных
         try:
             with self.conn.cursor() as cur:
@@ -144,29 +145,39 @@ class DBManager:
 
                 # Выводим значение средней зарплаты (оно будет находиться в ячейке 0 кортежа)
                 if avg_salary is not None:
-                    print(f"Средняя зарплата по вакансиям: {avg_salary[0]:,.2f}")
+                    self.avg_salary_float = float(avg_salary[0])
+                    print(f"Средняя зарплата по вакансиям: {self.avg_salary_float:,.0f}")
+                    return self.avg_salary_float
                 else:
                     print("Не удалось получить среднюю зарплату.")
+                    return None
         except psycopg2.Error as e:
             print(f"Ошибка при получении средней зарплаты: {e}")
             self.conn.rollback()
+            return None
         finally:
             self.close_db_connection()  # Закрытие соединения с базой данных
 
     def get_vacancies_with_higher_salary(self) -> None:
         """
-        Получение максимальной зарплаты и отображение результата. В случае ошибки, выводит сообщение об ошибке.
+        Получение списка вакансий, у которых зарплата выше средней зарплаты и отображение результата. В случае ошибки,
+        выводит сообщение об ошибке.
         """
-
         self.connect_to_db()
         try:
             with self.conn.cursor() as cur:
-                # Измененный запрос на получение максимальной зарплаты
-                cur.execute("SELECT MAX(vacancy_salary) FROM Vacancies WHERE vacancy_salary != 'Не указано';")
-                max_salary = cur.fetchone()[0]
-                print(f"Максимальная зарплата по вакансиям: {max_salary}")
+                cur.execute(
+                    "SELECT Employers.employer_name, Vacancies.vacancy_name, Vacancies.vacancy_salary, "
+                    "Vacancies.vacancy_link "
+                    "FROM Vacancies "
+                    "LEFT JOIN Employers ON Vacancies.employer_id = Employers.employer_id "
+                    "WHERE CAST(vacancies.vacancy_salary AS NUMERIC) > %s AND Vacancies.vacancy_salary != 'Не указано';",
+                    (self.avg_salary_float,)
+                )
+                higher_salary_vacancies = cur.fetchall()
+                print(f"Список вакансий с зарплатой выше средней: {json.dumps(higher_salary_vacancies, indent=4, ensure_ascii=False)}")
         except psycopg2.Error as e:
-            print(f"Ошибка при получении максимальной зарплаты: {e}")
+            print(f"Ошибка при получении вакансий с зарплатой выше средней зарплаты: {e}")
         finally:
             self.close_db_connection()
 

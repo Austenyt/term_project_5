@@ -1,7 +1,11 @@
+import json
+
 from src.dbmanager import DBManager
 from src.hh import HeadHunter
 
 hh = HeadHunter()
+hh.get_employers()
+hh.get_vacancies_count()
 hh.get_vacancies()
 hh_data = hh.get_format_and_search_vacancies()
 
